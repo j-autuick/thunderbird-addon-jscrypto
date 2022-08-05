@@ -11,7 +11,7 @@
         }
     },
     "background": {
-        "page": "background.html"
+        "page": "background.js"
     },
     "compose_action": {
         "default_popup": "passwordPrompt/passwordPrompt.html",
