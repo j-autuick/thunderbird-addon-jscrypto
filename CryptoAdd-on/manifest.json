@@ -3,24 +3,21 @@
     "name": "Crypto add-on",
     "description": "A password AES cryptographic addon",
     "version": "1.0",
-    "author": "Esteban Licea",
+    "author": "Drexl Spivey",
     "applications": {
         "gecko": {
-            "id": "esteban@little-beak.com",
+            "id": "drexl@little-beak.com",
             "strict_min_version": "78.0"
         }
     },
     "background": {
-        "page": "background.js"
+        "scripts": [ "background.js" ]
     },
     "compose_action": {
-        "default_popup": "passwordPrompt/passwordPrompt.html",
         "default_title": "Insecure",
         "default_icon": "images/unlocked_64px.png"
     },
-    "permissions": [
-        "menus"
-    ],
+    "permissions": [],
     "icons": {
         "64": "images/unlocked_64px.png",
         "32": "images/unlocked_32px.png",

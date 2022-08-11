@@ -1,3 +1,5 @@
+console.log("background.js loaded.");
+
 // Function to open a popup and await user feedback
 async function blockingPopup() {
 	async function popupClosePromise(popupId, defaultPopupCloseMode) {
@@ -27,15 +29,14 @@ async function blockingPopup() {
 	}
 
 	let window = await messenger.windows.create({
-		 url: "passwordPrompt/passwordPrompt.html",
+		 url: "passwordPrompt/popup.html",
 		 type: "popup",
-		 height: 280,
+		 height: 180,
 		 width: 390 });
 	// await the created popup to be closed and define a default
-	// return value if the window is closed without clicking a button
 	let rv = await popupClosePromise(window.id, "cancel");
 	console.log(rv);
  }
 
 //listener to trigger the popup
-messenger.browserAction.onClicked.addListener(blockingPopup);
+messenger.composeAction.onClicked.addListener(blockingPopup);
