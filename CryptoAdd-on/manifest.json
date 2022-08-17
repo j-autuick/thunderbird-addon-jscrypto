@@ -17,7 +17,9 @@
         "default_title": "Insecure",
         "default_icon": "images/unlocked_64px.png"
     },
-    "permissions": [],
+    "permissions": [
+        "compose"
+    ],
     "icons": {
         "64": "images/unlocked_64px.png",
         "32": "images/unlocked_32px.png",
