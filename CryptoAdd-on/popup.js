@@ -8,11 +8,6 @@ async function notifyMode(event) {
     var password = await document.getElementById("password_ok").value;
     console.log("6. This gets the password " + password);
 
-    await messenger.runtime.sendMessage({
-        popupCloseMode: event.target.getAttribute("value")
-    });
-    console.log("6.5. This gets the password " + password);
-    
     //Ah! this is the data (encrypt or cancel!)
     console.log("7. An Ok/Encrypt or Cancel is pressed: " + event.target.getAttribute("data"));
     await messenger.runtime.sendMessage({ popupCloseMode: event.target.getAttribute("data") });

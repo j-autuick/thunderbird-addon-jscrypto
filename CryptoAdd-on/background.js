@@ -34,7 +34,7 @@ async function blockingPopup() {
 				//TODO **** NEED PASSWORD HERE!! *****
 				//above all works, now just this part -- //TODO How do I get the password here?
 				//currently, break here
-				console.log("8. password entered is: " + password);
+				//console.log("8. password entered is: " + password);
 
 				//this works when uncommented.
 				//console.log("10. Encrypt now! " + sjcl.encrypt(password, details.body));
@@ -78,14 +78,9 @@ async function getBodyText(tab) {
 	console.log("2. This is the body text from the getBodyText function: " + details.body);
 }
 
-async function getPasswordFromPopup() {
-	const password = await messenger.runtime.onMessage.addListener(password);
-}
-
 
 //listener to trigger the popup - event listener? or listener? the difference?
 messenger.composeAction.onClicked.addListener(blockingPopup);
 messenger.composeAction.onClicked.addListener(getBodyText);
-messenger.composeAction.onClicked.addListener(getPasswordFromPopup);
 
 
