@@ -1,4 +1,4 @@
-console.log("0. background.js LOADED.");
+// console.log("0. background.js LOADED.");
 //This imports the Stanford JavaScript Cryptography Library into this file.
 var imported = document.createElement('script');
 imported.src = 'sjcl.js';
@@ -9,7 +9,7 @@ var currentComposeTabId;
 
 async function blockingPopup() {
 
-	console.log("2.5 'Insecure' button has been pressed: now inside blockingPopup.");
+	console.log("2.5 'Insecure' button activated: now inside blockingPopup.");
 
 	//defaultPopupCloseMode parameter for either Ok or Cancel!
 	//popupId is parameter for the popup's id
@@ -39,6 +39,7 @@ async function blockingPopup() {
 
 			//on click - this will get the value from the "data", so the promise
 			//is fulfilled.
+			//this means popup is up and running
 
 			console.log("6. now inside the new Promise - ready to resolve.");
 
@@ -47,7 +48,7 @@ async function blockingPopup() {
 			let popupCloseMode = defaultPopupCloseMode;
 			
 			//note this function is not async and all it's content fires through
-			//one parameter..
+			//one parameter..not yet called...but when
 			function windowRemoveListener(closedId) {
 				/* This function only checks to see if popupId and closeId are the same
 				if they are, it.. */
@@ -63,7 +64,7 @@ async function blockingPopup() {
 				//this works when uncommented.
 				//console.log("10. Encrypt now! " + sjcl.encrypt(password, details.body));
 				
-				console.log("12. Random text to encrypt is: " + details.body);
+				
 
 				console.log("13. Removing window.  This is activated if a Cancel or Encrypt button is pressed.");
 				console.log("13.1 popupId and closedId " + popupId + ", " + closedId);
@@ -79,6 +80,20 @@ async function blockingPopup() {
 					messenger.runtime.onMessage.removeListener(messageListener);
 					//this resolves the promise
 					console.log("14. All popup windows closed.");
+					console.log("15. password value is: " + popupCloseMode)
+					if (popupCloseMode === "cancel" || popupCloseMode === undefined) {
+						console.log("Cancel has been pressed.");
+					} else {
+						let password = popupCloseMode;
+						//let password = popupClosePromise(myPopup.id);
+						console.log("16. Encrypting now! " + sjcl.encrypt(password, details.body));
+						
+						console.log("12. Random text to encrypt is: " + details.body);
+						let newBody = sjcl.encrypt(password, details.body);
+						console.log("17. newBody is " + newBody);
+						messenger.compose.setComposeDetails(currentComposeTabId, { body: newBody })
+						console.log("Here would be a good spot to execute encryption.");
+					};
 					resolve(popupCloseMode);
 				}
 			}
@@ -100,6 +115,7 @@ async function blockingPopup() {
 			//listen for messages, adds a callback when invoked
 			messenger.runtime.onMessage.addListener(messageListener);
 			//fires when the popup is closed, removes the listener
+			console.log("6.5 These listeners are now active");
 			messenger.windows.onRemoved.addListener(windowRemoveListener);
 		});
 	}
@@ -111,25 +127,31 @@ async function blockingPopup() {
 		 height: 180,
 		 width: 390 });
 	
-	console.log("3.1 This is originally called earlier!")
-	let pw = await popupClosePromise(myPopup.id);
-	console.log("15. This is pw: " + pw);
+	console.log("3.1 this is bad coding, but will get us the password from the popup callback.");
+	//calls the popupClosePromise function
+	//let pw = await popupClosePromise(myPopup.id);
 
-	console.log("16. Encrypting now! " + sjcl.encrypt(pw, details.body));
-	let newBody = await sjcl.encrypt(pw, details.body);
+	//resume running here after callback.
+	{
+	
+	//console.log("15. finally, pw is called back: " + pw);
 
-	console.log("17. newBody is " + newBody);
+	let rv = await popupClosePromise(myPopup.id, "cancel");
+	console.log("17.4 This is the return value: " + rv);
+
+	
 	console.log("17.5 current tabId " + currentComposeTabId);
 	//this is a promise object
 	//console.log("18. current id? " + tab.id);
 	//another promise object 
 
 	//this is undefined.
-	console.log("18. what's this? " + await messenger.compose.setComposeDetails(currentComposeTabId, { body: newBody }));
+	//console.log("18. what's this? " + await messenger.compose.setComposeDetails(currentComposeTabId, { body: newBody }));
 
-	console.log("19. Decrypting now to console " + sjcl.decrypt(pw, newBody));
+	//console.log("19. Decrypting now to console " + sjcl.decrypt(pw, newBody));
 	//Ok this is a promise!
 	//console.log("my compose details: " + messenger.compose.getComposeDetails(myPopup.id));
+	}
 	
 	
 }
@@ -142,7 +164,7 @@ async function getBodyText(tab) {
 	details = await messenger.compose.getComposeDetails(tab.id);
 	currentComposeTabId = tab.id;
 	//this works, so commenting these out for now.
-	console.log("4. Inside getBodyText(tab) function. it works as expected.")
+	// console.log("4. Inside getBodyText(tab) function. it works as expected.")
 	
 }
 
@@ -150,9 +172,9 @@ async function getBodyText(tab) {
 
 
 //listener to trigger the popup - first things that start the entire addon.
-console.log("1. addon LOADED: blockingPopup async function is available, but not yet called.");
+// console.log("1. addon LOADED: blockingPopup async function is available, but not yet called.");
 messenger.composeAction.onClicked.addListener(blockingPopup);
-console.log("2. simultanously, body text function is LOADED, but not called.");
+// console.log("2. simultanously, body text function is LOADED, but not called.");
 messenger.composeAction.onClicked.addListener(getBodyText);
 
 //test if this works

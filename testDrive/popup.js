@@ -1,7 +1,7 @@
 /*
 This Popup handles the input of the password, and two buttons: encrypt and cancel.
 */
-console.log("7. Popup.js is loaded.")
+// console.log("7. Popup.js is loaded.")
 
 window.addEventListener("load", onLoad);
 //this is loaded, each time the Insecure button is clicked.
@@ -14,6 +14,7 @@ async function notifyMode(event) {
     var password = await document.getElementById("password_input").value;
     console.log("9. This gets the password " + password);
     console.log("9.1 - which is: " + password);
+    console.log("checking sending of password: " + {popupCloseMode: password});
     await messenger.runtime.sendMessage({ popupCloseMode: password });
 
     //Ah! this send the data to the popupCloseMode function
@@ -34,7 +35,7 @@ async function onLoad() {
     document.getElementById("button_cancel").addEventListener("click", notifyMode);
     document.getElementById("password_input").addEventListener("blur", notifyMode);
     //the page is loaded, on the "insecure" click.
-    console.log("8. (popup.js) onLoad listeners are loaded.");
+    // console.log("8. (popup.js) onLoad listeners are loaded.");
 }
 
 
