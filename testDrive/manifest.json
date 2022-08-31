@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Crypto add-on",
     "description": "A password AES cryptographic addon",
-    "version": "1.0",
+    "version": "2.0",
     "author": "Drexl Spivey",
     "applications": {
         "gecko": {
@@ -10,19 +10,20 @@
             "strict_min_version": "78.0"
         }
     },
+    "message_display_action": {
+        "default_title": "Decrypt",
+        "default_icon": "images/locked_64px.png"
+    },
     "background": {
         "scripts": [ "background.js" ]
     },
     "compose_action": {
-        "default_title": "Insecure",
+        "default_title": "Encrypt",
         "default_icon": "images/unlocked_64px.png"
     },
     "permissions": [
-        "compose"
-    ],
-    "icons": {
-        "64": "images/unlocked_64px.png",
-        "32": "images/unlocked_32px.png",
-        "16": "images/unlocked_16px.png"
-    }
+        "compose",
+        "messageRead",
+        "messagesModify"
+    ]
 }
