@@ -37,6 +37,3 @@ async function onLoad() {
     //the page is loaded, on the "insecure" click.
     // console.log("8. (popup.js) onLoad listeners are loaded.");
 }
-
-
-
