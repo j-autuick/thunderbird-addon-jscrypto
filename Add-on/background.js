@@ -372,4 +372,3 @@ messenger.messageDisplayAction.onClicked.addListener(decryptBlockingPopup);
    * Execute the startup handler whenever Thunderbird starts
    */
   document.addEventListener("DOMContentLoaded", handleStartup);
-  
