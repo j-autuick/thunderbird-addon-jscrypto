@@ -13,6 +13,7 @@ async function notifyMode(event) {
     //this works, why can't I send it to background??
     var password = await document.getElementById("password_input").value;
     console.log("9. This gets the password " + password);
+    
     console.log("9.1 - which is: " + password);
     await messenger.runtime.sendMessage({ popupCloseMode: password });
 

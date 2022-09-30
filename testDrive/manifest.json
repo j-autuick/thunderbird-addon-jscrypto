@@ -23,7 +23,7 @@
     },
     "permissions": [
         "compose",
-        "messageRead",
+        "messagesRead",
         "messagesModify"
     ]
 }
