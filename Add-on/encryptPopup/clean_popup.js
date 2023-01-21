@@ -4,8 +4,8 @@ async function notifyMode(event) {
 
     var password = await document.getElementById("password_input").value;
 
-    await messenger.runtime.sendMessage({ popupCloseMode: password });
-    await messenger.runtime.sendMessage({ popupCloseMode: event.target.getAttribute("data") });
+    await messenger.runtime.sendMessage({ closingEncryptionPopup: password });
+    await messenger.runtime.sendMessage({ closingEncryptionPopup: event.target.getAttribute("data") });
     
     let win = await messenger.windows.getCurrent();
     messenger.windows.remove(win.id);

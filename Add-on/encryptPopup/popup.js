@@ -14,14 +14,14 @@ async function notifyMode(event) {
     var password = await document.getElementById("password_input").value;
     console.log("9. This gets the password " + password);
     console.log("9.1 - which is: " + password);
-    console.log("checking sending of password: " + {popupCloseMode: password});
-    await messenger.runtime.sendMessage({ popupCloseMode: password });
+    console.log("checking sending of password: " + {closingEncryptionPopup: password});
+    await messenger.runtime.sendMessage({ closingEncryptionPopup: password });
 
-    //Ah! this send the data to the popupCloseMode function
+    //Ah! this send the data to the closingEncryptionPopup function
     
     //ok password works with above...but then this breaks, so need 2!
     console.log("10. An 'encrypt' or 'Cancel' has pressed: " + event.target.getAttribute("data"));
-    await messenger.runtime.sendMessage({ popupCloseMode: event.target.getAttribute("data") });
+    await messenger.runtime.sendMessage({ closingEncryptionPopup: event.target.getAttribute("data") });
     
     //await - waits for a promise to fulfill
     let win = await messenger.windows.getCurrent();

@@ -9,7 +9,6 @@ var currentComposeTabId;
 async function encryptionPopup() {
 	async function closingEncryptionPopupPromise(popupId, defaultPopupCloseMode) {
 		try {
-			//as soon as this await is fulfilled, execution continues.
 			await messenger.windows.get(popupId);
 		} catch (e) {
 			//I don't know when this should ever fire. 
@@ -17,24 +16,25 @@ async function encryptionPopup() {
 		}
 
 		return new Promise(resolve => {
-			let popupCloseMode = defaultPopupCloseMode;
+			let closingEncryptionPopup = defaultPopupCloseMode;
 			
 			function windowRemoveListener(closedId) {
 				if (popupId == closedId) {
 					messenger.windows.onRemoved.removeListener(windowRemoveListener);
 					messenger.runtime.onMessage.removeListener(messageListener);
-					if (popupCloseMode === "cancel" || popupCloseMode === undefined) {
+					if (closingEncryptionPopup === "cancel" || closingEncryptionPopup === undefined) {
+						console.log("We are inside here, but why?");
 					} else {
-						let password = popupCloseMode;
+						let password = closingEncryptionPopup;
 						let newBody = sjcl.encrypt(password, details.body);
 						messenger.compose.setComposeDetails(currentComposeTabId, { body: newBody })
 					};
-					resolve(popupCloseMode);
+					resolve(closingEncryptionPopup);
 				}
 			}
 			function messageListener(request, sender, sendResponse) {
-				if (sender.tab.windowId == popupId && request && request.popupCloseMode) {
-					popupCloseMode = request.popupCloseMode;
+				if (sender.tab.windowId == popupId && request && request.closingEncryptionPopup) {
+					closingEncryptionPopup = request.closingEncryptionPopup;
 				}
 			}
 			messenger.runtime.onMessage.addListener(messageListener);
@@ -59,7 +59,7 @@ async function getBodyText(tab) {
 async function decryptBlockingPopup() {
 	async function popup2ClosePromise(popupId, defaultPopupCloseMode) {
 		try {
-			console.log("4.5 Entering 'closingEncryptionPopupPromise's' try block.")
+			console.log("4.5 Entering 'pop2ClosePromise's' try block.")
 			
 			await messenger.windows.get(popupId);
 		} catch (e) {
