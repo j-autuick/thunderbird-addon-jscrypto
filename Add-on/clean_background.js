@@ -23,9 +23,9 @@ async function blockingPopup() {
 					messenger.runtime.onMessage.removeListener(messageListener);
 					if (popupCloseMode === "cancel" || popupCloseMode === undefined) {
 					} else {
-						let password = popupCloseMode;
-						let newBody = sjcl.encrypt(password, details.body);
-						messenger.compose.setComposeDetails(currentComposeTabId, { body: newBody })
+						//let password = popupCloseMode;
+						//let newBody = sjcl.encrypt(password, details.body);
+						//messenger.compose.setComposeDetails(currentComposeTabId, { body: newBody })
 					};
 					resolve(popupCloseMode);
 				}
@@ -79,7 +79,7 @@ async function decryptBlockingPopup() {
 					} else {
 						let password = popupCloseMode2;
 					
-						let newBody = sjcl.decrypt(password, details.body);
+						//let newBody = sjcl.decrypt(password, details.body);
 						console.log("17. newBody is " + newBody);
 						//** HERE NEED SYNTAX FOR WRITING BACK TO MESSAGE WINDOW */
 						//messenger.messages.update(currentComposeTabId, { body: newBody })

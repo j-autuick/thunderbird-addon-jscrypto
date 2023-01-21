@@ -6,11 +6,13 @@ document.head.appendChild(imported);
 var details;
 var currentComposeTabId;
 
-async function blockingPopup() {
-	async function popupClosePromise(popupId, defaultPopupCloseMode) {
+async function encryptionPopup() {
+	async function closingEncryptionPopupPromise(popupId, defaultPopupCloseMode) {
 		try {
+			//as soon as this await is fulfilled, execution continues.
 			await messenger.windows.get(popupId);
 		} catch (e) {
+			//I don't know when this should ever fire. 
 			return defaultPopupCloseMode;
 		}
 
@@ -39,14 +41,14 @@ async function blockingPopup() {
 			messenger.windows.onRemoved.addListener(windowRemoveListener);
 		});
 	}
-	let myPopup = await messenger.windows.create({
+	let launchingEncryptionPopup = await messenger.windows.create({
 		 url: "encryptPopup/popup.html",
 		 type: "popup",
 		 height: 180,
 		 width: 390 });
 	
-	let rv = await popupClosePromise(myPopup.id, "cancel");
-	console.log("17.4 This is the return value: " + rv);
+	let closingPopupOptionSelected = await closingEncryptionPopupPromise(launchingEncryptionPopup.id, "cancel");
+	console.log("17.4 This is the return value: " + closingPopupOptionSelected);
 }
 
 async function getBodyText(tab) {
@@ -54,11 +56,10 @@ async function getBodyText(tab) {
 	currentComposeTabId = tab.id;
 }
 
-
 async function decryptBlockingPopup() {
 	async function popup2ClosePromise(popupId, defaultPopupCloseMode) {
 		try {
-			console.log("4.5 Entering 'popupClosePromise's' try block.")
+			console.log("4.5 Entering 'closingEncryptionPopupPromise's' try block.")
 			
 			await messenger.windows.get(popupId);
 		} catch (e) {
@@ -110,9 +111,9 @@ async function decryptBlockingPopup() {
 
 }
 	
-messenger.composeAction.onClicked.addListener(blockingPopup);
-messenger.composeAction.onClicked.addListener(getBodyText);
-messenger.messageDisplayAction.onClicked.addListener(decryptBlockingPopup);
+// messenger.composeAction.onClicked.addListener(encryptionPopup);
+// messenger.composeAction.onClicked.addListener(getBodyText);
+// messenger.messageDisplayAction.onClicked.addListener(decryptBlockingPopup);
 
 //********************************************************************** */
 
@@ -128,7 +129,6 @@ messenger.messageDisplayScripts.register({
 	js: [{ file: "messageContentScripts/message-content-script.js" }],
 	css: [{ file: "messageContentScripts/message-content-styles.css" }],
 });
-console.log("we have loaded the messageContentScripts");
 };
 
 /**
@@ -142,31 +142,6 @@ const {
 
 console.log("Inside doHandleCommand! Woo!");
 
-//const messageHeader = await browser.messageDisplay.getDisplayedMessage(tabId);
-
-// check for known commands
-// switch (command.toLocaleLowerCase()) {
-//   case "getnotificationdetails":
-// 	{
-// 	  // create the information chunk we want to return to our message content script
-// 	  return {
-// 		text: `Mail subject is "${messageHeader.subject}"`,
-// 	  };
-// 	}
-	// break;
-
-//   case "markunread":
-// 	{
-// 	  // get the current message from the given tab
-// 	  if (messageHeader) {
-// 		// mark the message as unread
-// 		browser.messages.update(messageHeader.id, {
-// 		  read: false,
-// 		});
-// 	  }
-// 	}
-// 	break;
-// }
 };
 
 /**
@@ -182,16 +157,10 @@ if (message && message.hasOwnProperty("command")) {
 };
 
 
-  /** Adding all handlers here */
+/** Adding all handlers here */
 
-  //listener to trigger the popup - first things that start the entire addon.
-// console.log("1. addon LOADED: blockingPopup async function is available, but not yet called.");
-messenger.composeAction.onClicked.addListener(blockingPopup);
-// console.log("2. simultanously, body text function is LOADED, but not called.");
+messenger.composeAction.onClicked.addListener(encryptionPopup);
 messenger.composeAction.onClicked.addListener(getBodyText);
-
-//used for decode button
-//listener to trigger the popup
 messenger.messageDisplayAction.onClicked.addListener(decryptBlockingPopup);
 /**
  * Add a handler for communication with other parts of the extension,
@@ -204,5 +173,6 @@ messenger.runtime.onMessage.addListener(handleMessage);
 
 /**
  * Execute the startup handler whenever Thunderbird starts
+ * ----this doesn't work, for whatever reason?? added this.seems to work now
  */
-document.addEventListener("DOMContentLoaded", handleStartup);
+document.addEventListener("DOMContentLoaded", this.handleStartup);
