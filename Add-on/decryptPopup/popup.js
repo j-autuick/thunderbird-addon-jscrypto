@@ -8,25 +8,20 @@ window.addEventListener("load", onLoad);
 
 async function notifyMode(event) {
 
-    //await messenger.runtime.sendMessage({ getPassword: "hi"});
-
     //this works, why can't I send it to background??
-    var password = await document.getElementById("password_input").value;
-    console.log("9. This gets the password " + password);
-    console.log("9.1 - which is: " + password);
-    console.log("checking sending of password: " + {popupCloseMode2: password});
-    await messenger.runtime.sendMessage({ popupCloseMode2: password });
+    {
+        var password = await document.getElementById("password_input").value;
+        console.log("9. This gets the password " + password);
+        console.log("9.1 - which is: " + password);
+    }
+    //this is wrong or useless, but why?
+    console.log("checking sending of password: " + {closingDecryptionPopup: password});
+    await messenger.runtime.sendMessage({ closingDecryptionPopup: password });
 
-    //Ah! this send the data to the popupCloseMode function
+    await messenger.runtime.sendMessage({ closingDecryptionPopup: event.target.getAttribute("data") });
     
-    //ok password works with above...but then this breaks, so need 2!
-    console.log("10. An 'encrypt' or 'Cancel' has pressed: " + event.target.getAttribute("data"));
-    await messenger.runtime.sendMessage({ popupCloseMode2: event.target.getAttribute("data") });
-    
-    //await - waits for a promise to fulfill
     let win = await messenger.windows.getCurrent();
     messenger.windows.remove(win.id);
-    console.log("10.4 just checking when this fires.")
 
 }
 
