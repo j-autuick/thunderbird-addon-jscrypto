@@ -1,6 +1,5 @@
 console.log("hello from inside the content script.");
 
-
 //we get inside the function, but then get an uncaught exception error.
 async function testingMaterial() {
   console.log("We are inside the content-script showBanner")
@@ -40,6 +39,5 @@ browser.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 
   // You can now use the tabId as needed in your content script
 });
-
 
 testingMaterial();

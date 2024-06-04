@@ -62,8 +62,6 @@ async function getBodyTextFromComposeWindow(tab) {
 	currentComposeTabId = tab.id;
 }
 
-	
-
 async function decryptionPopup() {
 	async function closingDecryptionPopupPromise(popupId, defaultPopupCloseMode) {
 		try {
@@ -88,7 +86,7 @@ async function decryptionPopup() {
 						console.log("what is closingDecryptionPopup? " + closingDecryptionPopup);
 						console.log("We doing work now...");
 						//Have password -> add text from above, and decrypt
-						let password = "cats";
+						let password = "hog";
 						//where did I get details.body from?
 						//can I get the body in here?
 						
@@ -140,7 +138,7 @@ async function decryptionPopup() {
 }
 
 
-//TODO Where I am at: the content script is 100% not understood, and probably mostly wrong. fix, step by step.
+//TODO Where I am at: the content script is *NOT* understood, and probably mostly wrong. fix, step by step.
 
 messenger.composeAction.onClicked.addListener(encryptionPopup);
 messenger.messageDisplayAction.onClicked.addListener(decryptionPopup);

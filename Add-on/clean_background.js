@@ -54,7 +54,6 @@ async function getBodyText(tab) {
 	currentComposeTabId = tab.id;
 }
 
-
 async function decryptBlockingPopup() {
 	async function popup2ClosePromise(popupId, defaultPopupCloseMode) {
 		try {
