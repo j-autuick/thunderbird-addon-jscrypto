@@ -179,8 +179,6 @@ async function commandHandler(message, sender) {
         sender.tab.id
     );
 	
-	
-
     if (!messageHeader) {
         return;
     }

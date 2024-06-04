@@ -4,9 +4,6 @@ console.log("hello from inside the content script.");
 async function testingMaterial() {
   console.log("We are inside the content-script showBanner")
 
-
-
-
   let homies = await browser.runtime.sendMessage({
     command: "sayHi",
   })
@@ -27,8 +24,6 @@ async function testingMaterial() {
 
   // and insert it as the very first element in the message
   document.body.insertBefore(notification, document.body.firstChild);
-
-
   
 };
 
