@@ -3,20 +3,33 @@ var imported = document.createElement('script');
 imported.src = 'sjcl.js';
 document.head.appendChild(imported);
 
-// Register the message display script.
+// Register the message display script. Not sure if this works.
+/** Ok encryption+sending works without this...
+
 messenger.messageDisplayScripts.register({
     js: [{ file: "messageContentScripts/message-content-script.js" }],
     //css: [{ file: "../message-content-styles.css" }],
 });
+*/
 
 var currentComposeTabId;
+
+function looksLikeEncryptedJson(text) {
+	try {
+		const obj = JSON.parse(text);
+		return (
+			obj.iv && obj.v && obj.iter && obj.ks && obj.cipher && obj.ct
+		);
+	} catch (e) {
+		return false;
+	}
+}
 
 async function encryptionPopup() {
 	async function closingEncryptionPopupPromise(popupId, defaultPopupCloseMode) {
 		try {
 			await messenger.windows.get(popupId);
 		} catch (e) {
-			console.log("We have erred and are now activating defaultPopupCloseMode");
 			return defaultPopupCloseMode;
 		}
 
@@ -28,8 +41,8 @@ async function encryptionPopup() {
 					messenger.windows.onRemoved.removeListener(windowRemoveListener);
 					messenger.runtime.onMessage.removeListener(messageListener);
 					if (closingEncryptionPopup === "cancel" || closingEncryptionPopup === undefined) {
-						console.log("We are inside here, but why?");
 					} else {
+						//API allows this to all work nicely.
 						let password = closingEncryptionPopup;
 						let newBody = sjcl.encrypt(password, details.body);
 						messenger.compose.setComposeDetails(currentComposeTabId, { body: newBody })
@@ -53,167 +66,321 @@ async function encryptionPopup() {
 		 width: 390 });
 	
 	let closingEncryptionPopupOption = await closingEncryptionPopupPromise(launchingEncryptionPopup.id, "cancel");
-	console.log("17.4 This is the return value: " + closingEncryptionPopupOption);
 }
 
 async function getBodyTextFromComposeWindow(tab) {
-	//This will only work from the compose window. otherwise, the pw will not be collected
+	console.log("this function, getBodyTextFromComposeWindow called!")
 	details = await messenger.compose.getComposeDetails(tab.id);
 	currentComposeTabId = tab.id;
+	console.log(details)
 }
+
+// async function decryptionPopup() {
+//     async function waitForPopupClose(popupId, fallback = "cancel") {
+//         try {
+//             await messenger.windows.get(popupId);
+//         } catch (error) {
+//             console.warn("Popup was already closed.");
+//             return fallback;
+//         }
+
+//         return new Promise(resolve => {
+//             let result = fallback;
+
+//             function onPopupClosed(closedId) {
+//                 if (closedId !== popupId) return;
+
+//                 console.log("[Popup Closed] Result:", result);
+//                 cleanupListeners();
+//                 resolve(result);
+//             }
+
+//             function onPopupMessage(request, sender) {
+//                 if (sender.tab?.windowId !== popupId) return;
+
+//                 if (request?.closingDecryptionPopup !== undefined && request.closingDecryptionPopup !== null) {
+//                     result = request.closingDecryptionPopup;
+//                     console.log("[Message Received] closingDecryptionPopup:", result);
+//                 }
+//             }
+
+//             function cleanupListeners() {
+//                 messenger.windows.onRemoved.removeListener(onPopupClosed);
+//                 messenger.runtime.onMessage.removeListener(onPopupMessage);
+//             }
+
+//             messenger.windows.onRemoved.addListener(onPopupClosed);
+//             messenger.runtime.onMessage.addListener(onPopupMessage);
+//         });
+//     }
+
+//     try {
+//         let [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
+//         let message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
+//         let full = await messenger.messages.getFull(message.id);
+
+//         function findTextPart(part) {
+//             if (part.parts) {
+//                 for (let subPart of part.parts) {
+//                     let found = findTextPart(subPart);
+//                     if (found) return found;
+//                 }
+//             }
+//             if (part.contentType === "text/plain") {
+//                 return part;
+//             }
+//             return null;
+//         }
+
+//         let textPart = findTextPart(full);
+
+//         if (!textPart || !textPart.body) {
+//             console.warn("Message is not encrypted. Showing warning popup.");
+//             await messenger.windows.create({
+//                 url: "msg_not_encrypted/msg-not-encrypted.html",
+//                 type: "popup",
+//                 height: 180,
+//                 width: 390
+//             });
+//             return;
+//         }
+
+//         const encryptedText = textPart.body.trim();
+
+//         // Check if encryptedText is a likely SJCL-encrypted string
+//         let isProbablySJCL = false;
+//         try {
+//             const parsed = JSON.parse(encryptedText);
+//             if (parsed.iv && parsed.ct && parsed.mode && parsed.ks) {
+//                 isProbablySJCL = true;
+//             }
+//         } catch (e) {
+//             // Not JSON, definitely not SJCL
+//         }
+
+//         if (!isProbablySJCL) {
+//             console.warn("Message doesn't look like SJCL-encrypted data. Showing warning popup.");
+//             await messenger.windows.create({
+//                 url: "msg_not_encrypted/msg-not-encrypted.html",
+//                 type: "popup",
+//                 height: 180,
+//                 width: 390
+//             });
+//             return;
+//         }
+
+//         // Now show password popup
+//         const popup = await messenger.windows.create({
+//             url: "decryptPopup/popup.html",
+//             type: "popup",
+//             height: 180,
+//             width: 390
+//         });
+
+//         const userInput = await waitForPopupClose(popup.id, "cancel");
+//         if (userInput === "cancel") {
+//             console.log("User canceled decryption.");
+//             return;
+//         }
+
+//         // Try decryption
+//         let decryptedMessage;
+//         try {
+//             decryptedMessage = sjcl.decrypt(userInput, encryptedText);
+//             console.log("Decrypted message:", decryptedMessage);
+//         } catch (err) {
+//             const message = err?.message || err?.toString?.() || "";
+//             if (message.includes("ccm: tag doesn't match")) {
+//                 console.log("Password is incorrect – showing error popup.");
+//                 await messenger.windows.create({
+//                     url: "wrong_password/wrong-password.html",
+//                     type: "popup",
+//                     height: 200,
+//                     width: 390
+//                 });
+//             } else {
+//                 console.error("Decryption failed:", message);
+//             }
+//             return;
+//         }
+
+//         // Parse and extract message
+//         const parser = new DOMParser();
+//         const doc = parser.parseFromString(decryptedMessage, "text/html");
+//         const pElement = doc.querySelector("p");
+//         let decryptedText = pElement ? pElement.textContent.trim() : decryptedMessage;
+
+//         await messenger.tabs.executeScript(tab.id, {
+//             code: `
+//                 var decryptedText = \`${decryptedText}\`;
+//                 document.body.innerHTML = '<p>' + decryptedText + '</p>';
+//             `
+//         });
+
+//     } catch (err) {
+//         console.error("Unexpected failure in decryptionPopup():", err.message || err);
+//     }
+// }
 
 async function decryptionPopup() {
-	async function closingDecryptionPopupPromise(popupId, defaultPopupCloseMode) {
-		try {
-			await messenger.windows.get(popupId);
-		} catch (e) {
-			console.log("We are about to abort <HERE>");
-			return defaultPopupCloseMode;
-		}
+    try {
+        const tab = await getActiveTab();
+        const messageText = await getPlainTextMessage(tab.id);
 
-		return new Promise(resolve => {
-			let closingDecryptionPopup = defaultPopupCloseMode;
-			
-			function windowRemoveListener(closedId) {
-				if (popupId == closedId) {
-					messenger.windows.onRemoved.removeListener(windowRemoveListener);
-					messenger.runtime.onMessage.removeListener(messageListener);
-					if (closingDecryptionPopup === "cancel" || closingDecryptionPopup === undefined) {
+        if (!isSJCLFormatted(messageText)) {
+            await showPopup("msg_not_encrypted/msg-not-encrypted.html", 180);
+            return;
+        }
 
-					} else {
-						//this is gonna be all crap. it has to be done in the content-script.
-						//BUT, I need to send the password!
-						console.log("what is closingDecryptionPopup? " + closingDecryptionPopup);
-						console.log("We doing work now...");
-						//Have password -> add text from above, and decrypt
-						let password = "hog";
-						//where did I get details.body from?
-						//can I get the body in here?
-						
-						console.log("Inside decryption loop, password: " + password);
+        const password = await promptForPassword();
+        if (password === "cancel") {
+            console.log("User canceled decryption.");
+            return;
+        }
 
-						let oldBody2 = '{"iv":"7/yTUj7X+qUvXCwzlgTvGQ==","v":1,"iter":10000,"ks":128,"ts":64,"mode":"ccm","adata":"","cipher":"aes","salt":"UXJXd14GVhM=","ct":"1/bnGAHgrOv0Sd3/UE0fzUILPvORW0aWUgwvMFlvTDD77ARUyrtJRBwbxeJHJGvxdcXLilxwhvqu5/7tiARzUsWZd20U/GASRPP0SJrQ0yhIa3pyKnG+Uce3nex/glFuYTnMwDvzTBqsxN/sKh13vktNlvyiHmjxXZl42a8weXhTvF+0HFsSi30NoacXlHwyc00lGkTpFi6A4kg="}';
-						console.log("Inside decryption loop, Message Body is: " + oldBody2);
-						
-						let newBody2 = sjcl.decrypt(password, oldBody2);
-						console.log("what is a newBody2?" + newBody2);
-						console.log("Inside decryption loop, newBody is: " + newBody2);
-						//leave newBody2 as is...send it to the message content script.
-						//TODO: get document.body "text" - need to use the content scripts. meh
-						
-						//this gets us some script tag??
-						//msgBody = document.getElementsByTagName("body")[0].innerHTML;
-						
-						//not sure any of this shit is useful.
-						//console.log("msgBody is: " + msgBody);
-  						//let oldBody = msgBody[0].innerText;
-						//console.log("Oldbody from background is: " + oldBody);
-						//TODO: replace the 'new' decrypted text into the document body.
+        const decrypted = decryptMessage(password, messageText);
+        const cleanText = extractDecryptedText(decrypted);
 
-					};
-					resolve(closingDecryptionPopup);
-				}
-			}
-			function messageListener(request, sender, sendResponse) {
-				
-				if (sender.tab.windowId == popupId && request && request.closingDecryptionPopup) {
-					closingDecryptionPopup = request.closingDecryptionPopup;
-				}
-			}
+        await displayDecryptedText(tab.id, cleanText);
 
-			messenger.runtime.onMessage.addListener(messageListener);
-			messenger.windows.onRemoved.addListener(windowRemoveListener);
-		});
-	}
-	
-	let launchingDecryptPopup = await messenger.windows.create({
-		 url: "decryptPopup/popup.html",
-		 type: "popup",
-		 height: 180,
-		 width: 390 });
+    } catch (err) {
+        console.error("Unexpected failure in decryptionPopup():", err.message || err);
+    }
+}
 
-	//this returns immediately to cancel, why?
-	let closingDecryptionPopupOption = await closingDecryptionPopupPromise(launchingDecryptPopup.id, "cancel");
-	console.log("Selected closing option: " + closingDecryptionPopupOption);
+async function getActiveTab() {
+    const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
+    return tab;
+}
+
+async function getPlainTextMessage(tabId) {
+    const message = await messenger.messageDisplay.getDisplayedMessage(tabId);
+    const full = await messenger.messages.getFull(message.id);
+
+    const findTextPart = (part) => {
+        if (part.parts) {
+            for (let sub of part.parts) {
+                const found = findTextPart(sub);
+                if (found) return found;
+            }
+        }
+        return part.contentType === "text/plain" ? part : null;
+    };
+
+    const textPart = findTextPart(full);
+    if (!textPart || !textPart.body) throw new Error("No text/plain part found in message.");
+
+    return textPart.body.trim();
+}
+
+function isSJCLFormatted(text) {
+    try {
+        const parsed = JSON.parse(text);
+        return parsed && parsed.iv && parsed.ct && parsed.mode && parsed.ks;
+    } catch {
+        return false;
+    }
+}
+
+async function showPopup(url, height = 180, width = 390) {
+    await messenger.windows.create({ url, type: "popup", height, width });
+}
+
+async function promptForPassword() {
+    const popup = await messenger.windows.create({
+        url: "decryptPopup/popup.html",
+        type: "popup",
+        height: 180,
+        width: 390
+    });
+
+    return await waitForPopupClose(popup.id, "cancel");
+}
+
+async function waitForPopupClose(popupId, fallback = "cancel") {
+    try {
+        await messenger.windows.get(popupId);
+    } catch {
+        console.warn("Popup already closed.");
+        return fallback;
+    }
+
+    return new Promise(resolve => {
+        let result = fallback;
+
+        function onClosed(id) {
+            if (id !== popupId) return;
+            cleanup();
+            resolve(result);
+        }
+
+        function onMessage(request, sender) {
+            if (sender.tab?.windowId !== popupId) return;
+            if (request?.closingDecryptionPopup !== undefined) {
+                result = request.closingDecryptionPopup;
+            }
+        }
+
+        function cleanup() {
+            messenger.windows.onRemoved.removeListener(onClosed);
+            messenger.runtime.onMessage.removeListener(onMessage);
+        }
+
+        messenger.windows.onRemoved.addListener(onClosed);
+        messenger.runtime.onMessage.addListener(onMessage);
+    });
+}
+
+function decryptMessage(password, encryptedText) {
+    try {
+        return sjcl.decrypt(password, encryptedText);
+    } catch (err) {
+        const msg = err?.message || err?.toString?.() || "";
+        if (msg.includes("ccm: tag doesn't match")) {
+            showPopup("wrong_password/wrong-password.html", 200);
+        } else {
+            console.error("Decryption failed:", msg);
+        }
+        throw err;
+    }
+}
+
+function extractDecryptedText(htmlString) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, "text/html");
+    const p = doc.querySelector("p");
+    return p ? p.textContent.trim() : htmlString;
+}
+
+async function displayDecryptedText(tabId, text) {
+    await messenger.tabs.executeScript(tabId, {
+        code: `
+            document.body.innerHTML = '<p>' + \`${text}\` + '</p>';
+        `
+    });
 }
 
 
-//TODO Where I am at: the content script is *NOT* understood, and probably mostly wrong. fix, step by step.
+messenger.runtime.onMessage.addListener((message) => {
+	if (message.retryDecryption !== undefined) {
+	  if (message.retryDecryption) {
+		// Relaunch decryption popup
+		decryptionPopup(); 
+	  } else {
+		console.log("User canceled retry.");
+	  }
+	}
+  });
+  
 
 messenger.composeAction.onClicked.addListener(encryptionPopup);
 messenger.messageDisplayAction.onClicked.addListener(decryptionPopup);
-
-//this really only works from the compose window. busted.
 messenger.composeAction.onClicked.addListener(getBodyTextFromComposeWindow);
-
-
-/**
- * Add a handler for the communication with other parts of the extension,
- * like our message display script.
- *
- * Note: It is best practice to always define a synchronous listener
- *       function for the runtime.onMessage event.
- *       If defined asynchronously, it will always return a Promise
- *       and therefore answer all messages, even if a different listener
- *       defined elsewhere is supposed to handle these.
- * 
- *       The listener should only return a Promise for messages it is
- *       actually supposed to handle.
- */
-messenger.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    // Check what type of message we have received and invoke the appropriate
-    // handler function.
-    if (message && message.hasOwnProperty("command")) {
-        return commandHandler(message, sender);
-    }
-    // Return false if the message was not handled by this listener.
-    return false;
-});
-
-// The actual (asynchronous) handler for command messages.
-async function commandHandler(message, sender) {
-    // Get the message currently displayed in the sending tab, abort if
-    // that failed.
-	//const msgBody = await messenger.messages.getFull(sender.tab.id);
-    const messageHeader = await messenger.messageDisplay.getDisplayedMessage(
-        sender.tab.id
-    );
-	
-    if (!messageHeader) {
-        return;
-    }
-
-    // Check for known commands.
-    switch (message.command) {
-		case "sayHello":
-			//let dog = "Dog is a variable from the background-page.";
-			return { text: newBody2};
-    }
-}
-// background.js
-let activeTabId; // Store the active tabId
-
-// Listen for tab activation
-browser.tabs.onActivated.addListener((activeInfo) => {
-  activeTabId = activeInfo.tabId;
-});
-
-// You can also listen for tab creation
-browser.tabs.onCreated.addListener((tab) => {
-  // Store the tabId here if needed
-});
-
-// background.js
-function injectContentScript() {
-	// Check if there's an active tabId
-	if (activeTabId) {
-	  // Execute content script in the active tab with the tabId
-	  browser.tabs.executeScript(activeTabId, {
-		file: "content.js" // Replace with your content script filename
-	  });
-	}
-  }
   
-  // Example: Execute content script when the extension icon is clicked
-  browser.browserAction.onClicked.addListener(injectContentScript);
+messenger.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	console.log("Received message from popup:", message);
+	if (message.closingDecryptionPopup) {
+		console.log("Password received via messaging system:", message.closingDecryptionPopup);
+	}
+  });
   

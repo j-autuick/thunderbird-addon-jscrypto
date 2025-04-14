@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Not Encrypted</title>
+	<link rel="stylesheet" href="../popup.css">
+    <script src="msg-not-encrypted.js"></script> 
+</head>
+<body>
+	<div class="popup-container">
+		<p>This message is <span style="font-weight: bold;">not</span> encrypted.</p>
+		<button id="button_ok">OK</button>
+	</div>
+	<script>
+		document.getElementById("ok_button").addEventListener("click", async () => {
+			let win = await messenger.windows.getCurrent();
+			messenger.windows.remove(win.id);
+		});
+	</script>
+</body>
+</html>
