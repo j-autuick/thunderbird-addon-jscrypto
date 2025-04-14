@@ -337,7 +337,7 @@ function decryptMessage(password, encryptedText) {
     } catch (err) {
         const msg = err?.message || err?.toString?.() || "";
         if (msg.includes("ccm: tag doesn't match")) {
-            showPopup("wrong_password/wrong-password.html", 200);
+            showPopup("wrong_password/wrong-password.html", 240);
         } else {
             console.error("Decryption failed:", msg);
         }
