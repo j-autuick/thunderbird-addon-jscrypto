@@ -1,16 +1,33 @@
+/**
+ * Project: Thunderbird Cryptography Add-on
+ * File: background.js
+ * Description: This file handles all the background tasks within
+ * the Add-on, that cannot be done inline via the API.
+ *
+ * Author: Drexl
+ * License: GNU General Public License v3.0
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * © 2025 Drexl
+ */
+
 //This imports the Stanford JavaScript Cryptography Library into this file.
 var imported = document.createElement('script');
 imported.src = 'sjcl.js';
 document.head.appendChild(imported);
 
-// Register the message display script. Not sure if this works.
-/** Ok encryption+sending works without this...
-
-messenger.messageDisplayScripts.register({
-    js: [{ file: "messageContentScripts/message-content-script.js" }],
-    //css: [{ file: "../message-content-styles.css" }],
-});
-*/
 
 var currentComposeTabId;
 
@@ -74,154 +91,7 @@ async function getBodyTextFromComposeWindow(tab) {
 	currentComposeTabId = tab.id;
 	console.log(details)
 }
-
-// async function decryptionPopup() {
-//     async function waitForPopupClose(popupId, fallback = "cancel") {
-//         try {
-//             await messenger.windows.get(popupId);
-//         } catch (error) {
-//             console.warn("Popup was already closed.");
-//             return fallback;
-//         }
-
-//         return new Promise(resolve => {
-//             let result = fallback;
-
-//             function onPopupClosed(closedId) {
-//                 if (closedId !== popupId) return;
-
-//                 console.log("[Popup Closed] Result:", result);
-//                 cleanupListeners();
-//                 resolve(result);
-//             }
-
-//             function onPopupMessage(request, sender) {
-//                 if (sender.tab?.windowId !== popupId) return;
-
-//                 if (request?.closingDecryptionPopup !== undefined && request.closingDecryptionPopup !== null) {
-//                     result = request.closingDecryptionPopup;
-//                     console.log("[Message Received] closingDecryptionPopup:", result);
-//                 }
-//             }
-
-//             function cleanupListeners() {
-//                 messenger.windows.onRemoved.removeListener(onPopupClosed);
-//                 messenger.runtime.onMessage.removeListener(onPopupMessage);
-//             }
-
-//             messenger.windows.onRemoved.addListener(onPopupClosed);
-//             messenger.runtime.onMessage.addListener(onPopupMessage);
-//         });
-//     }
-
-//     try {
-//         let [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
-//         let message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
-//         let full = await messenger.messages.getFull(message.id);
-
-//         function findTextPart(part) {
-//             if (part.parts) {
-//                 for (let subPart of part.parts) {
-//                     let found = findTextPart(subPart);
-//                     if (found) return found;
-//                 }
-//             }
-//             if (part.contentType === "text/plain") {
-//                 return part;
-//             }
-//             return null;
-//         }
-
-//         let textPart = findTextPart(full);
-
-//         if (!textPart || !textPart.body) {
-//             console.warn("Message is not encrypted. Showing warning popup.");
-//             await messenger.windows.create({
-//                 url: "msg_not_encrypted/msg-not-encrypted.html",
-//                 type: "popup",
-//                 height: 180,
-//                 width: 390
-//             });
-//             return;
-//         }
-
-//         const encryptedText = textPart.body.trim();
-
-//         // Check if encryptedText is a likely SJCL-encrypted string
-//         let isProbablySJCL = false;
-//         try {
-//             const parsed = JSON.parse(encryptedText);
-//             if (parsed.iv && parsed.ct && parsed.mode && parsed.ks) {
-//                 isProbablySJCL = true;
-//             }
-//         } catch (e) {
-//             // Not JSON, definitely not SJCL
-//         }
-
-//         if (!isProbablySJCL) {
-//             console.warn("Message doesn't look like SJCL-encrypted data. Showing warning popup.");
-//             await messenger.windows.create({
-//                 url: "msg_not_encrypted/msg-not-encrypted.html",
-//                 type: "popup",
-//                 height: 180,
-//                 width: 390
-//             });
-//             return;
-//         }
-
-//         // Now show password popup
-//         const popup = await messenger.windows.create({
-//             url: "decryptPopup/popup.html",
-//             type: "popup",
-//             height: 180,
-//             width: 390
-//         });
-
-//         const userInput = await waitForPopupClose(popup.id, "cancel");
-//         if (userInput === "cancel") {
-//             console.log("User canceled decryption.");
-//             return;
-//         }
-
-//         // Try decryption
-//         let decryptedMessage;
-//         try {
-//             decryptedMessage = sjcl.decrypt(userInput, encryptedText);
-//             console.log("Decrypted message:", decryptedMessage);
-//         } catch (err) {
-//             const message = err?.message || err?.toString?.() || "";
-//             if (message.includes("ccm: tag doesn't match")) {
-//                 console.log("Password is incorrect – showing error popup.");
-//                 await messenger.windows.create({
-//                     url: "wrong_password/wrong-password.html",
-//                     type: "popup",
-//                     height: 200,
-//                     width: 390
-//                 });
-//             } else {
-//                 console.error("Decryption failed:", message);
-//             }
-//             return;
-//         }
-
-//         // Parse and extract message
-//         const parser = new DOMParser();
-//         const doc = parser.parseFromString(decryptedMessage, "text/html");
-//         const pElement = doc.querySelector("p");
-//         let decryptedText = pElement ? pElement.textContent.trim() : decryptedMessage;
-
-//         await messenger.tabs.executeScript(tab.id, {
-//             code: `
-//                 var decryptedText = \`${decryptedText}\`;
-//                 document.body.innerHTML = '<p>' + decryptedText + '</p>';
-//             `
-//         });
-
-//     } catch (err) {
-//         console.error("Unexpected failure in decryptionPopup():", err.message || err);
-//     }
-// }
-
+    
 async function decryptionPopup() {
     try {
         const tab = await getActiveTab();
